@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,10 +11,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { io, Socket } from "socket.io-client";
 
 export default function CommentsSection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const socketRef = useRef<Socket | null>(null);
+
+  // ===== Socket.IO connection =====
+  useEffect(() => {
+    socketRef.current = io("http://localhost:5000");
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, []);
 
   const form = useForm<InsertComment>({
     resolver: zodResolver(insertCommentSchema),
@@ -53,7 +63,20 @@ export default function CommentsSection() {
 
   const onSubmit = (data: InsertComment) => {
     commentMutation.mutate(data);
+
+    // ===== Kirim payload ke XSS detector =====
+    socketRef.current?.emit("payload_from_dummy", { payload: data.message });
   };
+
+  // ===== Kirim payload setiap ada perubahan teks di field message =====
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      if (values.message?.trim()) {
+        socketRef.current?.emit("payload_from_dummy", { payload: values.message });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -182,7 +205,7 @@ export default function CommentsSection() {
                         {formatDate(comment.createdAt)}
                       </span>
                     </div>
-                    <p className="text-slate-600 leading-relaxed">{comment.message}</p>
+                    <p className="text-slate-600 leading-relaxed">dangerouslySetInnerHTML={{ __html: comment.message }}</p>
                     <div className="mt-4 flex items-center space-x-4">
                       <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
                         <ThumbsUp className="w-4 h-4 mr-1" />
