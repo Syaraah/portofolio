@@ -1,0 +1,6 @@
+
+> rest-express@1.0.0 dev
+> cross-env NODE_ENV=development tsx server/index.ts
+
+1:17:23 PM [express] serving on port 5000
+1:17:28 PM [express] POST /api/comments 201 in 3ms :: {"name":"A","email":"a@example.com","message":…
