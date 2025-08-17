@@ -57,7 +57,7 @@ export default function ContactSection() {
     },
   });
 
-  // ===== Submit form + kirim payload ke XSS detector =====
+  // ===== Submit form + kirim payload ke XSS detector hanya saat submit =====
   const onSubmit = (data: InsertContactMessage) => {
     contactMutation.mutate(data);
 
@@ -66,18 +66,6 @@ export default function ContactSection() {
       socket.emit("payload_from_dummy", { payload: data.message });
     }
   };
-
-  // ===== Kirim payload saat user mengetik =====
-  form.watch((values) => {
-    if (socket) {
-      if (values.subject?.trim()) {
-        socket.emit("payload_from_dummy", { payload: values.subject });
-      }
-      if (values.message?.trim()) {
-        socket.emit("payload_from_dummy", { payload: values.message });
-      }
-    }
-  });
 
   return (
     <section id="contact" className="py-20 bg-slate-50">

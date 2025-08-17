@@ -64,19 +64,9 @@ export default function CommentsSection() {
   const onSubmit = (data: InsertComment) => {
     commentMutation.mutate(data);
 
-    // ===== Kirim payload ke XSS detector =====
+    // ===== Kirim payload ke XSS detector hanya saat submit =====
     socketRef.current?.emit("payload_from_dummy", { payload: data.message });
   };
-
-  // ===== Kirim payload setiap ada perubahan teks di field message =====
-  useEffect(() => {
-    const subscription = form.watch((values) => {
-      if (values.message?.trim()) {
-        socketRef.current?.emit("payload_from_dummy", { payload: values.message });
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
 
   const formatDate = (date: Date) => {
     const now = new Date();
